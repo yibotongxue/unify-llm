@@ -5,7 +5,7 @@ from typing import Any
 from tqdm import tqdm
 
 from ...cache_manager import BaseCacheManager
-from ...utils.type_utils import InferenceInput, InferenceOutput
+from ...utils.type_utils import InferenceInput, InferenceOutput, to_dict
 from ..base import BaseInference
 
 
@@ -39,13 +39,15 @@ class BaseApiLLMInference(BaseInference):
         enable_tqdm: bool = False,
         tqdm_args: dict[str, Any] | None = None,
         cache_manager: BaseCacheManager | None = None,
+        *,
+        generated_keys: list[str] | None = None,
     ) -> list[InferenceOutput]:
         if len(inputs) == 0:
             return []
         if len(inputs) == 1:
             return [self._single_generate_with_cache(inputs[0], cache_manager)]
         return self._parallel_generate_with_cache(
-            inputs, enable_tqdm, tqdm_args, cache_manager
+            inputs, enable_tqdm, tqdm_args, cache_manager, generated_keys=generated_keys
         )
 
     def _generate(
@@ -66,6 +68,8 @@ class BaseApiLLMInference(BaseInference):
         enable_tqdm: bool = False,
         tqdm_args: dict[str, Any] | None = None,
         cache_manager: BaseCacheManager | None = None,
+        *,
+        generated_keys: list[str] | None = None,
     ) -> list[InferenceOutput]:
         """
         并行执行多个推理请求
@@ -96,10 +100,15 @@ class BaseApiLLMInference(BaseInference):
         results: dict[int, InferenceOutput] = {}
         max_workers = min(len(inputs), self.max_workers)
 
+        not_none_generated_keys = generated_keys or [None] * len(inputs)  # type: ignore[list-item]
+
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_index = {
                 executor.submit(
-                    self._single_generate_with_cache, input_item, cache_manager
+                    self._single_generate_with_cache,
+                    input_item,
+                    cache_manager,
+                    generated_key=not_none_generated_keys[idx],
                 ): idx
                 for idx, input_item in enumerate(inputs)
             }
@@ -120,13 +129,15 @@ class BaseApiLLMInference(BaseInference):
         self,
         inference_input: InferenceInput,
         cache_manager: BaseCacheManager | None = None,
+        *,
+        generated_key: str | None = None,
     ) -> InferenceOutput:
-        if cache_manager is None:
+        if cache_manager is None or generated_key is None:
             return self._single_generate(inference_input)
-        if output := cache_manager.load_cache(inference_input):
+        if output := cache_manager.load_cache(generated_key):
             return InferenceOutput(**output)
         output = self._single_generate(inference_input)
-        cache_manager.save_cache(inference_input, output)
+        cache_manager.save_cache(generated_key, to_dict(output))
         return output
 
     @abstractmethod

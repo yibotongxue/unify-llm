@@ -1,6 +1,6 @@
-from ...utils.config import *
-from ...utils.type_utils import InferenceInput
-from .factory import get_api_llm_inference
+from ..utils.config import *
+from ..utils.type_utils import InferenceInput
+from .factory import InferenceFactory
 
 
 def main() -> None:
@@ -20,7 +20,7 @@ def main() -> None:
     cfgs = load_config(args.config_file_path)
     update_config_with_unparsed_args(unparsed_args=unparsed_args, cfgs=cfgs)
 
-    inference = get_api_llm_inference(cfgs["model_cfgs"], cfgs["inference_cfgs"])
+    inference = InferenceFactory.get_inference_instance(**cfgs)
 
     inference_input = [
         InferenceInput.from_prompts(

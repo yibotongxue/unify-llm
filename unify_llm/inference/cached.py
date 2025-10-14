@@ -54,9 +54,14 @@ class CachedInference(InferenceInterface):
         list[InferenceOutput]
             推理结果列表，部分结果可能来自缓存
         """
+        generated_keys = [self._generate_key(input) for input in inputs]
         if isinstance(self.inference, BaseApiLLMInference):
             return self.inference.generate_with_cache(
-                inputs, enable_tqdm, tqdm_args, self.cache_manager
+                inputs,
+                enable_tqdm,
+                tqdm_args,
+                self.cache_manager,
+                generated_keys=generated_keys,
             )
         cached_input_indices = []
         cached_result: list[InferenceOutput] = []
