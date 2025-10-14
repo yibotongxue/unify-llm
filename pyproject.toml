@@ -1,7 +1,7 @@
 [project]
-name = "python-project-template"
+name = "unify-llm"
 version = "0.1.0"
-description = "Python项目模板"
+description = "统一大语言模型框架"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
@@ -14,7 +14,7 @@ include = '\.pyi?$'
 [tool.isort]
 profile = "black"
 line_length = 88
-src_paths = ["src", "tests"]
+src_paths = ["unify_llm", "tests"]
 
 [tool.mypy]
 strict = true
@@ -34,7 +34,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["src"]
+packages = ["unify_llm"]
 
 [tool.uv]
 index-url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
