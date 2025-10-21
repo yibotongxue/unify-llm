@@ -49,5 +49,11 @@ def get_api_llm_inference(
         return AnthropicApiLLMInference(
             model_cfgs=model_cfgs, inference_cfgs=inference_cfgs
         )
+    elif model_sdk_type == "dashscope":
+        from .dashscope import DashScopeLLMInference
+
+        return DashScopeLLMInference(
+            model_cfgs=model_cfgs, inference_cfgs=inference_cfgs
+        )
     else:
         raise ValueError(f"模型类型{model_sdk_type}不被支持")
