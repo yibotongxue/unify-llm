@@ -45,7 +45,13 @@ class BaseApiLLMInference(BaseInference):
         if len(inputs) == 0:
             return []
         if len(inputs) == 1:
-            return [self._single_generate_with_cache(inputs[0], cache_manager)]
+            return [
+                self._single_generate_with_cache(
+                    inputs[0],
+                    cache_manager,
+                    generated_key=generated_keys[0] if generated_keys else None,
+                )
+            ]
         return self._parallel_generate_with_cache(
             inputs, enable_tqdm, tqdm_args, cache_manager, generated_keys=generated_keys
         )
