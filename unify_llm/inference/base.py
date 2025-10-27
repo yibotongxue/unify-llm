@@ -7,9 +7,49 @@ from typing import Any, ContextManager
 
 from ..prompts import BasePromptBuilder, PromptBuilderRegistry
 from ..utils.config import deepcopy_config
+from ..utils.image_utils import encode_image_to_base64_with_path
+from ..utils.logger import Logger
 from ..utils.shutdownable import Shutdownable
 from ..utils.tools import dict_to_hash
 from ..utils.type_utils import InferenceInput, InferenceOutput
+
+_logger = Logger(f"unify_llm.{__name__}")
+
+
+def _prepare_inference_input(inference_input: InferenceInput) -> InferenceInput:
+    # output = inference_input.model_copy()
+    messages: list[dict[str, Any]] = []
+    for turn in inference_input.conversation:
+        if not "content" in turn:
+            _logger.warning("消息不包含content字段，仍然继续处理")
+            messages.append(turn)
+            continue
+        content: list[dict[str, Any]] = turn["content"]
+        # print(conte)
+        new_content: list[dict[str, Any]] = []
+        for item in content:
+            if item.get("type") == "image" and "image_path" in item:
+                image_base64 = encode_image_to_base64_with_path(item["image_path"])
+                new_content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"},
+                    }
+                )
+            else:
+                new_content.append(item)
+        messages.append(
+            {
+                **turn,
+                "content": new_content,
+            }
+        )
+    return InferenceInput(
+        **{
+            **inference_input.model_dump(),
+            "conversation": messages,
+        }
+    )
 
 
 class InferenceInterface(ABC):
@@ -65,6 +105,7 @@ class InferenceInterface(ABC):
             ]
             inputs = prompt_builder.process_input_list(inputs)
         repeat_inputs: list[InferenceInput] = []
+        inputs = list(map(_prepare_inference_input, inputs))
         for input in inputs:
             for repeat_idx in range(repeat_cnt):
                 repeat_inputs.append(input.with_repeat_idx(repeat_idx))

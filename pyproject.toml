@@ -8,10 +8,11 @@ dependencies = [
     "accelerate>=1.10.1",
     "anthropic>=0.69.0",
     "dashscope>=1.24.7",
-    "datasets>=4.2.0",
+    "datasets==3.6.0",
     "google-genai>=1.43.0",
     "numpy>=2.2.6",
     "openai>=2.3.0",
+    "opencv-python>=4.12.0.88",
     "pydantic>=2.12.1",
     "pyyaml>=6.0.3",
     "redis>=6.4.0",
@@ -44,6 +45,9 @@ build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = [
+    "black>=25.9.0",
+    "ipykernel>=7.0.1",
+    "openpyxl>=3.1.5",
     "pre-commit>=4.2.0",
     "pytest>=8.4.1",
 ]
