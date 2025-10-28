@@ -40,7 +40,7 @@ source .venv/bin/activate
 ### 命令行使用
 
 ```bash
-python -m unify_llm.inference --config-file-path /path/to/config.yaml
+uv run -m unify_llm.inference --config-file-path /path/to/config.yaml
 ```
 
 ### 配置文件示例
@@ -110,16 +110,17 @@ unify-llm/
 ├── configs/           # 配置文件目录
 ├── outputs/           # 输出文件目录
 ├── logs/              # 日志文件目录
-├── unify_llm/         # 源代码目录
-│   ├── cache_manager/ # 缓存管理模块
-│   ├── inference/     # 推理模块
-│   │   ├── api_llm/   # API 模型实现
-│   │   ├── hf.py      # Hugging Face 推理实现
-│   │   ├── vllm.py    # vLLM 推理实现
-│   │   ├── factory.py # 推理工厂类
-│   │   └── base.py    # 基础推理接口
-│   ├── prompts/       # 提示词管理
-│   └── utils/         # 工具函数
+├── src/               # 源代码根目录
+│   └── unify_llm/     # 源代码目录
+│       ├── cache_manager/ # 缓存管理模块
+│       ├── inference/     # 推理模块
+│       │   ├── api_llm/   # API 模型实现
+│       │   ├── hf.py      # Hugging Face 推理实现
+│       │   ├── vllm.py    # vLLM 推理实现
+│       │   ├── factory.py # 推理工厂类
+│       │   └── base.py    # 基础推理接口
+│       ├── prompts/       # 提示词管理
+│       └── utils/         # 工具函数
 ├── tests/             # 测试文件目录
 ├── main.py            # 主程序入口
 └── pyproject.toml     # 项目配置文件

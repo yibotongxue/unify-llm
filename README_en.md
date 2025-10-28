@@ -40,7 +40,7 @@ source .venv/bin/activate
 ### Command Line Usage
 
 ```bash
-python -m unify_llm.inference --config-file-path /path/to/config.yaml
+uv run -m unify_llm.inference --config-file-path /path/to/config.yaml
 ```
 
 ### Configuration File Example
@@ -110,16 +110,17 @@ unify-llm/
 ├── configs/           # Configuration files directory
 ├── outputs/           # Output files directory
 ├── logs/              # Log files directory
-├── unify_llm/         # Source code directory
-│   ├── cache_manager/ # Cache management module
-│   ├── inference/     # Inference module
-│   │   ├── api_llm/   # API model implementation
-│   │   ├── hf.py      # Hugging Face inference implementation
-│   │   ├── vllm.py    # vLLM inference implementation
-│   │   ├── factory.py # Inference factory class
-│   │   └── base.py    # Base inference interface
-│   ├── prompts/       # Prompt management
-│   └── utils/         # Utility functions
+├── src/               # Source code root directory
+│   └── unify_llm/     # Source code directory
+│       ├── cache_manager/ # Cache management module
+│       ├── inference/     # Inference module
+│       │   ├── api_llm/   # API model implementation
+│       │   ├── hf.py      # Hugging Face inference implementation
+│       │   ├── vllm.py    # vLLM inference implementation
+│       │   ├── factory.py # Inference factory class
+│       │   └── base.py    # Base inference interface
+│       ├── prompts/       # Prompt management
+│       └── utils/         # Utility functions
 ├── tests/             # Test files directory
 ├── main.py            # Main program entry
 └── pyproject.toml     # Project configuration file
