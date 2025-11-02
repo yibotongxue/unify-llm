@@ -1,5 +1,5 @@
 import json
-from pathlib import Path
+import time
 from typing import Any
 
 import redis  # type: ignore [import-untyped]
@@ -9,7 +9,6 @@ from redis.exceptions import (  # type: ignore [import-untyped]
 )
 
 from ..utils.logger import Logger
-from ..utils.multi_process import rank_zero_only
 from .base import BaseCacheManager
 from .registry import CacheManagerRegistry
 
@@ -46,31 +45,37 @@ class RedisCacheManager(BaseCacheManager):
             )
             raise RuntimeError("Cannot connect to Redis")
 
-        self._load_from_json_dir()
-
-    @rank_zero_only
-    def _load_from_json_dir(self) -> None:
-        json_dir = self.cache_cfgs.get("json_dir", None)
-        if json_dir is not None:
-            self.logger.info(f"Loading cache from JSON files in {json_dir}")
-            for json_file in Path(json_dir).glob("*.json"):
-                with json_file.open("r", encoding="utf-8") as f:
-                    content = json.load(f)
-                    self.redis_client.set(json_file.stem, json.dumps(content))
+        self.max_retries: int = redis_cfgs.get("max_retries", 3)
+        self.sleep_interval: float = redis_cfgs.get("sleep_interval", 0.1)
 
     def _load_cache(self, key: str) -> dict[str, Any] | None:
-        try:
-            value = self.redis_client.get(key)
-            return json.loads(value) if value else None
-        except redis.exceptions.ResponseError as e:
-            self.logger.error(f"Redis load error: {str(e)}")
-            return None
+        for attempt in range(self.max_retries):
+            try:
+                value = self.redis_client.get(key)
+                return json.loads(value) if value else None
+            except Exception as e:
+                self.logger.error(
+                    f"Redis load error: {str(e)} in attempt {attempt + 1}"
+                )
+                time.sleep(self.sleep_interval)
+        self.logger.error(
+            f"Failed to load cache for key: {key} after {self.max_retries} attempts"
+        )
+        return None
 
     def save_cache(self, key: str, value: dict[str, Any]) -> None:
-        try:
-            self.redis_client.set(
-                key,
-                json.dumps(value),
-            )
-        except redis.exceptions.ResponseError as e:
-            self.logger.error(f"Redis save error: {str(e)}")
+        for attempt in range(self.max_retries):
+            try:
+                self.redis_client.set(
+                    key,
+                    json.dumps(value),
+                )
+                return
+            except Exception as e:
+                self.logger.error(
+                    f"Redis save error: {str(e)} in attempt {attempt + 1}"
+                )
+                time.sleep(self.sleep_interval)
+        self.logger.error(
+            f"Failed to save cache for key: {key} after {self.max_retries} attempts"
+        )

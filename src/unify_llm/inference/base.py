@@ -7,7 +7,7 @@ from typing import Any, ContextManager
 
 from ..prompts import BasePromptBuilder, PromptBuilderRegistry
 from ..utils.config import deepcopy_config
-from ..utils.image_utils import encode_image_to_base64_with_path
+from ..utils.image_utils import encode_image_to_base64, encode_image_to_base64_with_path
 from ..utils.logger import Logger
 from ..utils.shutdownable import Shutdownable
 from ..utils.tools import dict_to_hash
@@ -28,14 +28,35 @@ def _prepare_inference_input(inference_input: InferenceInput) -> InferenceInput:
         # print(conte)
         new_content: list[dict[str, Any]] = []
         for item in content:
-            if item.get("type") == "image" and "image_path" in item:
-                image_base64 = encode_image_to_base64_with_path(item["image_path"])
-                new_content.append(
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"},
-                    }
-                )
+            if item.get("type") == "image":
+                if "image_path" in item:
+                    image_base64 = encode_image_to_base64_with_path(item["image_path"])
+                    new_content.append(
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{image_base64}"
+                            },
+                        }
+                    )
+                elif "image" in item:
+                    image = item["image"]
+                    import numpy as np
+                    from PIL.Image import Image
+
+                    if isinstance(image, Image):
+                        image = np.array(image)
+                    image_base64 = encode_image_to_base64(image)
+                    new_content.append(
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{image_base64}"
+                            },
+                        }
+                    )
+                else:
+                    new_content.append(item)
             else:
                 new_content.append(item)
         messages.append(
